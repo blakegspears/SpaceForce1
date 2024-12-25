@@ -24,6 +24,10 @@ pygame.display.set_caption("Spaceship Game")
 clock = pygame.time.Clock()
 FPS = 60
 
+# Background intro image
+background_img = pygame.image.load("Background.jpg")  # Add a background image
+background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
 # Load spaceship image
 spaceship_img = pygame.image.load("spaceship.png")
 spaceship_img = pygame.transform.scale(spaceship_img, (100, 80))
@@ -60,18 +64,48 @@ EXPLOSION_COLORS = [YELLOW, ORANGE, RED]
 
 # Fonts and score
 font = pygame.font.Font(None, 36)
+large_font = pygame.font.Font(None, 72)
 score = 0
 top_score = 0
+
+# Sound effects
+bullet_sound = pygame.mixer.Sound("bulletsound.wav")
+explosion_sound = pygame.mixer.Sound("explosion.wav")
 
 # Game state
 running = True
 game_over = False
+intro_screen = True
 
 # Timers for enemies
 pygame.time.set_timer(pygame.USEREVENT, ENEMY_INTERVAL)
 
 # Game loop
 while running:
+    if intro_screen:
+        screen.blit(background_img, (0, 0))
+
+        # Display title and options
+        title_text = large_font.render("SpaceForce", True, WHITE)
+        start_text = font.render("Press S to Start", True, WHITE)
+        quit_text = font.render("Press Q to Quit", True, WHITE)
+
+        screen.blit(title_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 300))
+        screen.blit(start_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 250))
+        screen.blit(quit_text, (SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 300))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    intro_screen = False  # Exit intro screen
+                if event.key == pygame.K_q:
+                    running = False
+        continue
+
     screen.fill(BLACK)
 
     for event in pygame.event.get():
@@ -84,6 +118,7 @@ while running:
                     spaceship_rect.centerx - 5, spaceship_rect.top, 10, 20
                 )
                 bullets.append(bullet)
+                bullet_sound.play() 
         if event.type == pygame.USEREVENT and not game_over:
             # Spawn enemies
             enemy_type = random.choice(["alien", "asteroid"])
@@ -97,6 +132,7 @@ while running:
             if enemy_type == "alien" and random.random() < 0.5:  # 50% chance
                 enemy_bullet = pygame.Rect(enemy_x + 25, enemy_y + 50, 10, 20)
                 enemy_bullets.append(enemy_bullet)
+                bullet_sound.play() 
 
     if not game_over:
         # Move spaceship
@@ -131,6 +167,7 @@ while running:
                     bullets.remove(bullet)
                     explosions.append({"rect": enemy["rect"].copy(), "timer": EXPLOSION_DURATION})
                     enemies.remove(enemy)
+                    explosion_sound.play()
                     if enemy["type"] == "alien":
                         score += ALIEN_SCORE
 
@@ -138,10 +175,12 @@ while running:
         for enemy in enemies[:]:
             if spaceship_rect.colliderect(enemy["rect"]):
                 explosions.append({"rect": spaceship_rect.copy(), "timer": EXPLOSION_DURATION})
+                explosion_sound.play()
                 game_over = True
         for enemy_bullet in enemy_bullets[:]:
             if spaceship_rect.colliderect(enemy_bullet):
                 explosions.append({"rect": spaceship_rect.copy(), "timer": EXPLOSION_DURATION})
+                explosion_sound.play()
                 game_over = True
 
         # Draw spaceship
@@ -179,13 +218,15 @@ while running:
             top_score = score
 
         # Display Game Over with score and top score
-        game_over_text = font.render("GAME OVER! Press R to Restart", True, WHITE)
+        game_over_text = large_font.render("GAME OVER!", True, WHITE)
+        restart_text = font.render("Press R to Restart", True, WHITE)
         final_score_text = font.render(f"Your Score: {score}", True, YELLOW)
         top_score_text = font.render(f"Top Score: {top_score}", True, ORANGE)
 
-        screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT // 2 - 50))
-        screen.blit(final_score_text, (SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT // 2))
-        screen.blit(top_score_text, (SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT // 2 + 50))
+        screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 300))
+        screen.blit(restart_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 + 300))
+        screen.blit(final_score_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 25))
+        screen.blit(top_score_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 + 25))
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_r]:
