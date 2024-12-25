@@ -2,7 +2,7 @@
 
 This is the flowchart for the game SpaceForce.
 
-'''mermaid
+```mermaid
 flowchart TD
     A[Intro Screen] -->|Press S to Start| B[Main Game Loop]
     A -->|Press Q to Quit| F[Quit Game]
